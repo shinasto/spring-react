@@ -1,0 +1,22 @@
+node () { 
+    def app
+    stage('Preparation') { // for display purposes
+        checkout scm
+    }
+    stage('Build image') {
+       docker.withRegistry('http://sds.redii.net', 'redii-dep-credentials') {
+           app = docker.build('sds.redii.net/nexplant-dep/myapp:0.0.1', '-f Dockerfile_2 .')
+       }
+    }
+    stage('Unit Test') {
+        app.inside {
+            sh 'junit "/var/myapp/Springreact/target/surefire-reports/TEST-*.xml"'
+        }
+    }
+    stage('Publish') {
+       docker.withRegistry('http://sds.redii.net', 'redii-dep-credentials') {
+           app.push('0.0.1')
+           app.push('latest')
+       }
+    }
+}
